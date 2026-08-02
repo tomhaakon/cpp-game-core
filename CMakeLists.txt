@@ -12,9 +12,11 @@ add_library(
         src/Input.cpp
         src/AssetPath.cpp
         src/JsonFile.cpp
+        src/Log.cpp
         include/game_core/Input.h
         include/game_core/AssetPath.h
         include/game_core/JsonFile.h
+        include/game_core/Log.h
 )
 
 target_include_directories(
