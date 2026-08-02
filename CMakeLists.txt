@@ -19,6 +19,8 @@ add_library(
         include/game_core/Log.h
 )
 
+option(CPP_GAME_CORE_BUILD_LOG_TEST "Build the logging development test" OFF)
+
 target_include_directories(
     cpp_game_core
     PUBLIC
@@ -49,3 +51,9 @@ add_library(
     ALIAS
         cpp_game_core
 )
+
+if(CPP_GAME_CORE_BUILD_LOG_TEST)
+    find_package(Threads REQUIRED)
+    add_executable(cpp_game_core_log_test tests/LogTest.cpp)
+    target_link_libraries(cpp_game_core_log_test PRIVATE cpp_game_core Threads::Threads)
+endif()

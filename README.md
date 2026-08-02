@@ -2,6 +2,8 @@
 
 ## File logging
 
+Full configuration and usage documentation is available in [`docs/logging.md`](docs/logging.md).
+
 Initialize the logger near the start of the game and shut it down before exiting:
 
 ```cpp
@@ -19,7 +21,7 @@ int main() {
 }
 ```
 
-Each run creates `logs/<index>_<date>_<time>.txt`. Output written to `std::cout`,
+Each run creates `logs/<index>_<date>_<time>_pid-<process-id>.txt`. Output written to `std::cout`,
 `std::cerr`, and `std::clog` is mirrored to that file while logging is active.
 
 Optional JSON configuration can be applied with `Log::configureFromJson(document)`:

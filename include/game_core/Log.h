@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <filesystem>
 #include <string>
 
@@ -7,7 +8,27 @@
 
 namespace Log {
 
-enum class Level { Error, Warning, Info, Debug, Trace };
+enum class Level : int { Error = 0, Warning = 1, Info = 2, Debug = 3, Trace = 4 };
+
+class ScopedTimer {
+public:
+    ScopedTimer(Level level, std::string tag, std::string operation,
+                double minimumMilliseconds = 0.0);
+    ~ScopedTimer() noexcept;
+
+    ScopedTimer(const ScopedTimer &) = delete;
+    ScopedTimer &operator=(const ScopedTimer &) = delete;
+    ScopedTimer(ScopedTimer &&) = delete;
+    ScopedTimer &operator=(ScopedTimer &&) = delete;
+
+private:
+    Level level_;
+    std::string tag_;
+    std::string operation_;
+    double minimumMilliseconds_;
+    bool enabled_;
+    std::chrono::steady_clock::time_point start_;
+};
 
 void configureDefaults();
 void configureFromJson(const nlohmann::json &root);
