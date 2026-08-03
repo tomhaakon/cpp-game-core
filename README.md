@@ -28,3 +28,15 @@ Log::initialize("logs/application.log", config);
 ```
 
 See [the logging guide](docs/logging.md) for levels, rate limiting, timers, and flushing behavior.
+
+## Standalone logging test
+
+The complete `cpp_game_core` library receives raylib and nlohmann/json targets from its parent game. The logger itself is dependency-free and can be built and tested directly on Windows:
+
+```powershell
+cmake --preset windows-log-debug
+cmake --build --preset windows-log-debug
+ctest --preset windows-log-debug
+```
+
+In VS Code, open the `cpp-game-core` directory itself and select **Windows Log Test (Visual Studio)** as the configure preset. Opening the template directory configures the template instead.

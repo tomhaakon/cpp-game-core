@@ -1,0 +1,42 @@
+{
+    "version": 6,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 24,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "windows-log-debug",
+            "displayName": "Windows Log Test (Visual Studio)",
+            "generator": "Visual Studio 17 2022",
+            "architecture": "x64",
+            "binaryDir": "${sourceDir}/build/windows-log-debug",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            },
+            "cacheVariables": {
+                "CPP_GAME_CORE_BUILD_LOG_TEST": "ON"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "windows-log-debug",
+            "configurePreset": "windows-log-debug",
+            "configuration": "Debug"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "windows-log-debug",
+            "configurePreset": "windows-log-debug",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            }
+        }
+    ]
+}
