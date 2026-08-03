@@ -119,7 +119,7 @@ start the timer, and durations below the threshold are not logged.
 
 ## Development test
 
-Configure with `CPP_GAME_CORE_BUILD_LOG_TEST=ON`, build, and run `cpp_game_core_log_test`. The test
+Configure with `TEYA_CORE_BUILD_TESTS=ON`, build, and run `teya_core_log_test`. The test
 exercises filtering, full-date timestamps, explicit flushing, console and file output, newline
 escaping, startup cleanup, the absence of stream interception, rate limiting, bounded limiter
 cleanup, timer thresholds, repeated lifecycle calls, normal session endings, exact-path behavior,

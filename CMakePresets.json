@@ -18,7 +18,7 @@
                 "rhs": "Windows"
             },
             "cacheVariables": {
-                "CPP_GAME_CORE_BUILD_LOG_TEST": "ON"
+                "TEYA_CORE_BUILD_TESTS": "ON"
             }
         }
     ],
