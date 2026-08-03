@@ -17,7 +17,11 @@ struct LogConfig {
     std::size_t maxRateLimitEntries = 2048;
 };
 
-void initialize(const std::filesystem::path &filePath, const LogConfig &config = {});
+[[nodiscard]] bool initialize(const std::filesystem::path &filePath,
+                              const LogConfig &config = {});
+[[nodiscard]] bool deleteOldLogs(const std::filesystem::path &directory,
+                                 std::size_t maxFiles);
+void flush();
 void shutdown();
 
 [[nodiscard]] bool isEnabled(Level level = Level::Info);

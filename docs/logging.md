@@ -7,7 +7,9 @@ to the normal `Log::*` functions when needed.
 ## Initialization
 
 ```cpp
-Log::initialize("application.log");
+const auto logDirectory = std::filesystem::path{"logs"};
+if (!Log::deleteOldLogs(logDirectory, 10)) return 1;
+if (!Log::initialize(logDirectory / "application-2026-08-03_20-51-14.log")) return 1;
 Log::info("Startup", "Application started");
 Log::shutdown();
 ```
@@ -21,7 +23,18 @@ It appends to an existing file and starts every run with a divider such as:
 
 The logger does not scan the directory or create indexed, dated, or process-specific filenames.
 Repeated initialization and shutdown calls are safe; initialization is ignored while a file is
-already open. Logging before initialization still writes to the console.
+already open, writes a warning, and returns `false`. Successful initialization returns `true`.
+Logging before initialization still writes to the console.
+
+The application is responsible for choosing a unique filename for each run, including any desired
+date or run identifier. The logger never checks file size, renames the active file, or rotates it
+while messages are being written.
+
+Call `deleteOldLogs(directory, maxFiles)` before `initialize()` to optionally limit stored logs. It
+examines regular files with the `.log` extension, sorts them by modification time, and deletes the
+oldest files while keeping the requested number of newest files. It ignores other extensions. A
+missing directory is considered successful; filesystem inspection or deletion errors return
+`false`. Do not call it while a log file in that directory is active.
 
 ## Configuration
 
@@ -34,7 +47,9 @@ config.flushIntervalSeconds = 0.5;
 config.flushWarnings = true;
 config.rateLimitEntryTtlSeconds = 600.0;
 config.maxRateLimitEntries = 2048;
-Log::initialize("logs/application.log", config);
+if (!Log::initialize("logs/application-2026-08-03_20-51-14.log", config)) {
+    // Handle an invalid path or an already initialized logger.
+}
 ```
 
 Defaults:
@@ -60,19 +75,21 @@ Log::info("Startup", "Initialization completed");
 Log::warning("Configuration", "Optional value is missing");
 ```
 
-Output uses local time with milliseconds:
+File and console output use local date and time with milliseconds:
 
 ```text
-[20:51:14.382] [INFO] [Startup] Initialization completed
+[2026-08-03 20:51:14.382] [INFO] [Startup] Initialization completed
 ```
 
 Each `Log::*` call is atomic relative to other logger calls. Raw writes to `std::cout`, `std::cerr`,
 or `std::clog` are not captured and may interleave with logger output. Prefer `Log::*` for messages
-that should reach the file.
+that should reach the file. Carriage returns and newlines in tags or messages are escaped as `\\r`
+and `\\n`, ensuring each entry occupies exactly one line.
 
 Errors flush immediately. Warnings flush immediately by default. Lower levels remain buffered and
 active logging checks the periodic interval without creating a background thread. `shutdown()`
-always flushes the file.
+always writes a `Log session ended normally` divider and flushes the file. Call `Log::flush()` when
+an explicit durability point is needed.
 
 ## Rate limiting
 
@@ -103,6 +120,7 @@ start the timer, and durations below the threshold are not logged.
 ## Development test
 
 Configure with `CPP_GAME_CORE_BUILD_LOG_TEST=ON`, build, and run `cpp_game_core_log_test`. The test
-exercises filtering, timestamps, console and file output, the absence of stream interception, rate
-limiting, bounded limiter cleanup, timer thresholds, repeated lifecycle calls, fixed-path behavior,
+exercises filtering, full-date timestamps, explicit flushing, console and file output, newline
+escaping, startup cleanup, the absence of stream interception, rate limiting, bounded limiter
+cleanup, timer thresholds, repeated lifecycle calls, normal session endings, exact-path behavior,
 and concurrent structured logging.

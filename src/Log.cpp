@@ -13,6 +13,7 @@
 #include <stdexcept>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 namespace Log {
 namespace {
@@ -61,7 +62,8 @@ std::string timestamp() {
                                   now.time_since_epoch()) % 1000;
     const auto local = localTime(std::chrono::system_clock::to_time_t(now));
     std::ostringstream output;
-    output << std::put_time(&local, "%H:%M:%S") << '.' << std::setfill('0') << std::setw(3)
+    output << std::put_time(&local, "%Y-%m-%d %H:%M:%S") << '.' << std::setfill('0')
+           << std::setw(3)
            << milliseconds.count();
     return output.str();
 }
@@ -72,6 +74,17 @@ std::string sessionTimestamp() {
     std::ostringstream output;
     output << std::put_time(&local, "%Y-%m-%d %H:%M:%S");
     return output.str();
+}
+
+std::string escapeLineBreaks(const std::string &value) {
+    std::string escaped;
+    escaped.reserve(value.size());
+    for (const char character : value) {
+        if (character == '\n') escaped += "\\n";
+        else if (character == '\r') escaped += "\\r";
+        else escaped += character;
+    }
+    return escaped;
 }
 
 void flushIfDue(std::chrono::steady_clock::time_point now) {
@@ -121,35 +134,99 @@ LogConfig sanitized(LogConfig config) {
 
 } // namespace
 
-void initialize(const std::filesystem::path &filePath, const LogConfig &config) {
+bool initialize(const std::filesystem::path &filePath, const LogConfig &config) {
     std::string failure;
+    bool alreadyInitialized = false;
     {
         std::lock_guard<std::mutex> lock(logMutex);
-        if (logFile.is_open()) return;
+        if (logFile.is_open()) {
+            alreadyInitialized = true;
+        } else {
 
-        activeConfig = sanitized(config);
-        rateLimitEntries.clear();
-        try {
-            const auto parent = filePath.parent_path();
-            if (!parent.empty()) std::filesystem::create_directories(parent);
-            logFile.open(filePath, std::ios::out | std::ios::app);
-            if (!logFile) throw std::runtime_error("could not open " + filePath.string());
-            logFile << "\n===== Log session started: " << sessionTimestamp() << " =====\n";
-            logFile.flush();
-            lastFileFlush = std::chrono::steady_clock::now();
-            std::call_once(shutdownRegistration, [] { std::atexit(shutdown); });
-        } catch (const std::exception &exception) {
-            if (logFile.is_open()) logFile.close();
-            logFile.clear();
-            failure = exception.what();
+            activeConfig = sanitized(config);
+            rateLimitEntries.clear();
+            try {
+                const auto parent = filePath.parent_path();
+                if (!parent.empty()) std::filesystem::create_directories(parent);
+                logFile.open(filePath, std::ios::out | std::ios::app);
+                if (!logFile) throw std::runtime_error("could not open " + filePath.string());
+                const std::string divider = "\n===== Log session started: " + sessionTimestamp() +
+                                            " =====\n";
+                logFile << divider;
+                logFile.flush();
+                lastFileFlush = std::chrono::steady_clock::now();
+                std::call_once(shutdownRegistration, [] { std::atexit(shutdown); });
+            } catch (const std::exception &exception) {
+                if (logFile.is_open()) logFile.close();
+                logFile.clear();
+                failure = exception.what();
+            }
         }
     }
-    if (!failure.empty()) error("Log", "Failed to initialize file logging: " + failure);
+    if (alreadyInitialized) {
+        warning("Log", "initialize() ignored because logging is already initialized");
+        return false;
+    }
+    if (!failure.empty()) {
+        error("Log", "Failed to initialize file logging: " + failure);
+        return false;
+    }
+    return true;
+}
+
+bool deleteOldLogs(const std::filesystem::path &directory, std::size_t maxFiles) {
+    struct LogFile {
+        std::filesystem::path path;
+        std::filesystem::file_time_type modified;
+    };
+
+    std::vector<LogFile> files;
+    std::error_code error;
+    error.clear();
+    if (!std::filesystem::exists(directory, error)) return !error;
+
+    error.clear();
+    std::filesystem::directory_iterator it(directory, error), end;
+    if (error) return false;
+    while (it != end) {
+        error.clear();
+        const bool isLogFile = it->is_regular_file(error) && it->path().extension() == ".log";
+        if (error) return false;
+        if (isLogFile) {
+            error.clear();
+            const auto modified = it->last_write_time(error);
+            if (error) return false;
+            files.push_back({it->path(), modified});
+        }
+
+        error.clear();
+        it.increment(error);
+        if (error) return false;
+    }
+
+    std::sort(files.begin(), files.end(), [](const LogFile &left, const LogFile &right) {
+        return left.modified > right.modified;
+    });
+    bool allDeleted = true;
+    for (std::size_t index = maxFiles; index < files.size(); ++index) {
+        error.clear();
+        if (!std::filesystem::remove(files[index].path, error) || error) allDeleted = false;
+    }
+    return allDeleted;
+}
+
+void flush() {
+    std::lock_guard<std::mutex> lock(logMutex);
+    if (logFile.is_open()) {
+        logFile.flush();
+        lastFileFlush = std::chrono::steady_clock::now();
+    }
 }
 
 void shutdown() {
     std::lock_guard<std::mutex> lock(logMutex);
     if (logFile.is_open()) {
+        logFile << "===== Log session ended normally: " << sessionTimestamp() << " =====\n";
         logFile.flush();
         logFile.close();
     }
@@ -185,8 +262,8 @@ void message(Level level, const std::string &tag, const std::string &text) {
     std::lock_guard<std::mutex> lock(logMutex);
     if (!levelEnabled(level)) return;
 
-    const std::string line = "[" + timestamp() + "] [" + levelName(level) + "] [" + tag +
-                             "] " + text;
+    const std::string line = "[" + timestamp() + "] [" + levelName(level) + "] [" +
+                             escapeLineBreaks(tag) + "] " + escapeLineBreaks(text);
     std::ostream &console = level == Level::Error || level == Level::Warning
                                 ? static_cast<std::ostream &>(std::cerr)
                                 : static_cast<std::ostream &>(std::cout);
