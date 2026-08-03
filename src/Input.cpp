@@ -18,6 +18,8 @@ namespace
             return {KEY_W, KEY_UP};
         case Action::MoveDown:
             return {KEY_S, KEY_DOWN};
+        case Action::Run:
+            return {KEY_LEFT_SHIFT, KEY_RIGHT_SHIFT};
         case Action::Confirm:
             return {KEY_ENTER, KEY_SPACE};
         case Action::Cancel:
