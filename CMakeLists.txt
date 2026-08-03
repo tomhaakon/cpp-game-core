@@ -1,61 +1,71 @@
 cmake_minimum_required(VERSION 3.24)
 
 project(
-    cpp_game_core
+    teya_core
     VERSION 0.1.0
     LANGUAGES CXX
 )
 
-option(CPP_GAME_CORE_BUILD_LOG_TEST "Build the logging development test" OFF)
+option(TEYA_CORE_BUILD_TESTS "Build teya-core tests" ${PROJECT_IS_TOP_LEVEL})
+
+set(BUILD_EXAMPLES OFF CACHE BOOL "Build raylib examples" FORCE)
+set(BUILD_GAMES OFF CACHE BOOL "Build raylib games" FORCE)
+set(JSON_BuildTests OFF CACHE BOOL "Build nlohmann/json tests" FORCE)
+if(NOT TARGET raylib)
+    add_subdirectory(external/raylib EXCLUDE_FROM_ALL)
+endif()
+if(NOT TARGET nlohmann_json::nlohmann_json)
+    add_subdirectory(external/json EXCLUDE_FROM_ALL)
+endif()
 
 if(TARGET raylib AND TARGET nlohmann_json::nlohmann_json)
     add_library(
-        cpp_game_core
+        teya_core
         STATIC
             src/Input.cpp
             src/AssetPath.cpp
             src/JsonFile.cpp
             src/Log.cpp
-            include/game_core/Input.h
-            include/game_core/AssetPath.h
-            include/game_core/JsonFile.h
-            include/game_core/Log.h
+            include/teya/core/Input.h
+            include/teya/core/AssetPath.h
+            include/teya/core/JsonFile.h
+            include/teya/core/Log.h
     )
 
     target_include_directories(
-        cpp_game_core
+        teya_core
         PUBLIC
             "${CMAKE_CURRENT_SOURCE_DIR}/include"
     )
 
     target_compile_features(
-        cpp_game_core
+        teya_core
         PUBLIC
             cxx_std_17
     )
 
     set_target_properties(
-        cpp_game_core
+        teya_core
         PROPERTIES
             CXX_EXTENSIONS OFF
     )
 
     target_link_libraries(
-        cpp_game_core
+        teya_core
         PUBLIC
             raylib
             nlohmann_json::nlohmann_json
     )
 
     add_library(
-        cpp_game_core::cpp_game_core
+        Teya::Core
         ALIAS
-            cpp_game_core
+            teya_core
     )
-elseif(NOT CPP_GAME_CORE_BUILD_LOG_TEST)
+elseif(NOT TEYA_CORE_BUILD_TESTS)
     message(FATAL_ERROR
-        "Standalone cpp_game_core requires raylib and nlohmann_json targets. "
-        "Add this project from its parent game, or enable CPP_GAME_CORE_BUILD_LOG_TEST "
+        "Standalone teya-core requires raylib and nlohmann_json targets. "
+        "Initialize its submodules, or enable TEYA_CORE_BUILD_TESTS "
         "to build only the dependency-free logging test."
     )
 else()
@@ -64,12 +74,10 @@ else()
     )
 endif()
 
-if(CPP_GAME_CORE_BUILD_LOG_TEST)
+if(TEYA_CORE_BUILD_TESTS)
     enable_testing()
     find_package(Threads REQUIRED)
-    add_executable(cpp_game_core_log_test tests/LogTest.cpp src/Log.cpp)
-    target_include_directories(cpp_game_core_log_test PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
-    target_compile_features(cpp_game_core_log_test PRIVATE cxx_std_17)
-    target_link_libraries(cpp_game_core_log_test PRIVATE Threads::Threads)
-    add_test(NAME cpp_game_core_log_test COMMAND cpp_game_core_log_test)
+    add_executable(teya_core_log_test tests/LogTest.cpp)
+    target_link_libraries(teya_core_log_test PRIVATE Teya::Core Threads::Threads)
+    add_test(NAME teya_core_log_test COMMAND teya_core_log_test)
 endif()

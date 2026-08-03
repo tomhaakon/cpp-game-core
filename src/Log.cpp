@@ -1,4 +1,4 @@
-#include <game_core/Log.h>
+#include <teya/core/Log.h>
 
 #include <algorithm>
 #include <chrono>
@@ -15,7 +15,7 @@
 #include <utility>
 #include <vector>
 
-namespace Log {
+namespace teya::core::Log {
 namespace {
 
 struct RateLimitEntry {
@@ -308,4 +308,4 @@ ScopedTimer::~ScopedTimer() noexcept {
     }
 }
 
-} // namespace Log
+} // namespace teya::core::Log
