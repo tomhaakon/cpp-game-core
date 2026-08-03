@@ -22,10 +22,12 @@ std::string readFile(const std::filesystem::path &path) {
 
 int main() {
     const auto directory = std::filesystem::temp_directory_path() / "cpp_game_core_log_test";
-    const auto path = directory / "game.log";
+    const auto path = directory / "test.log";
     const auto ignoredPath = directory / "ignored.log";
     std::error_code fileError;
     std::filesystem::remove_all(directory, fileError);
+    std::filesystem::create_directories(directory);
+    std::ofstream(path) << "previous run entry\n";
 
     Log::LogConfig config;
     config.level = Log::Level::Debug;
@@ -37,14 +39,14 @@ int main() {
 
     assert(Log::isEnabled(Log::Level::Debug));
     assert(!Log::isEnabled(Log::Level::Trace));
-    assert(!Log::isRateLimited("FishActivity:non_water", 60.0));
-    assert(Log::isRateLimited("FishActivity:non_water", 60.0));
+    assert(!Log::isRateLimited("RepeatedEvent", 60.0));
+    assert(Log::isRateLimited("RepeatedEvent", 60.0));
 
     std::ostringstream capturedConsole;
     auto *originalCout = std::cout.rdbuf(capturedConsole.rdbuf());
-    Log::info("MapLoader", "Loaded mountain.tmx");
-    Log::debug("FishActivity", "Rejected activity outside water");
-    Log::trace("Filter", "This trace entry must be suppressed");
+    Log::info("InfoTest", "Informational message");
+    Log::debug("DebugTest", "Debug message");
+    Log::trace("LogTrace", "This trace entry must be suppressed");
     std::cout << "raw cout entry\n";
 
     {
@@ -77,11 +79,13 @@ int main() {
     const auto contents = readFile(path);
     const std::regex timestamp(R"(\[[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3}\] \[INFO\])");
     assert(std::regex_search(contents, timestamp));
+    assert(contents.find("previous run entry") != std::string::npos);
+    assert(contents.find("===== Log session started:") != std::string::npos);
     assert(contents.find("Visible timer completed in") != std::string::npos);
     assert(contents.find("Hidden timer completed in") == std::string::npos);
     assert(contents.find("This trace entry must be suppressed") == std::string::npos);
     assert(contents.find("raw cout entry") == std::string::npos);
-    assert(capturedConsole.str().find("Loaded mountain.tmx") != std::string::npos);
+    assert(capturedConsole.str().find("Informational message") != std::string::npos);
     assert(capturedConsole.str().find("raw cout entry") != std::string::npos);
     assert(!std::filesystem::exists(ignoredPath));
 
@@ -91,6 +95,12 @@ int main() {
     assert(!Log::isEnabled(Log::Level::Warning));
     assert(Log::isEnabled(Log::Level::Error));
     Log::shutdown();
+
+    const auto combinedContents = readFile(path);
+    const std::string divider = "===== Log session started:";
+    const auto firstDivider = combinedContents.find(divider);
+    assert(firstDivider != std::string::npos);
+    assert(combinedContents.find(divider, firstDivider + divider.size()) != std::string::npos);
 
     std::filesystem::remove_all(directory, fileError);
     return 0;

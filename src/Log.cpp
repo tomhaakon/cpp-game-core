@@ -66,6 +66,14 @@ std::string timestamp() {
     return output.str();
 }
 
+std::string sessionTimestamp() {
+    const auto now = std::chrono::system_clock::now();
+    const auto local = localTime(std::chrono::system_clock::to_time_t(now));
+    std::ostringstream output;
+    output << std::put_time(&local, "%Y-%m-%d %H:%M:%S");
+    return output.str();
+}
+
 void flushIfDue(std::chrono::steady_clock::time_point now) {
     if (!logFile.is_open() || activeConfig.flushIntervalSeconds <= 0.0) return;
     if (std::chrono::duration<double>(now - lastFileFlush).count() <
@@ -124,8 +132,10 @@ void initialize(const std::filesystem::path &filePath, const LogConfig &config) 
         try {
             const auto parent = filePath.parent_path();
             if (!parent.empty()) std::filesystem::create_directories(parent);
-            logFile.open(filePath, std::ios::out | std::ios::trunc);
+            logFile.open(filePath, std::ios::out | std::ios::app);
             if (!logFile) throw std::runtime_error("could not open " + filePath.string());
+            logFile << "\n===== Log session started: " << sessionTimestamp() << " =====\n";
+            logFile.flush();
             lastFileFlush = std::chrono::steady_clock::now();
             std::call_once(shutdownRegistration, [] { std::atexit(shutdown); });
         } catch (const std::exception &exception) {

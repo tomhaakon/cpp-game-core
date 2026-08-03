@@ -7,15 +7,21 @@ to the normal `Log::*` functions when needed.
 ## Initialization
 
 ```cpp
-Log::initialize("game.log");
-Log::info("Game", "Started");
+Log::initialize("application.log");
+Log::info("Startup", "Application started");
 Log::shutdown();
 ```
 
-`initialize()` takes the exact output file path, creates its parent directory when necessary, and
-replaces the file for the current run. It does not scan the directory or create indexed, dated, or
-process-specific filenames. Repeated initialization and shutdown calls are safe; initialization is
-ignored while a file is already open. Logging before initialization still writes to the console.
+`initialize()` takes the exact output file path and creates its parent directory when necessary.
+It appends to an existing file and starts every run with a divider such as:
+
+```text
+===== Log session started: 2026-08-03 09:15:42 =====
+```
+
+The logger does not scan the directory or create indexed, dated, or process-specific filenames.
+Repeated initialization and shutdown calls are safe; initialization is ignored while a file is
+already open. Logging before initialization still writes to the console.
 
 ## Configuration
 
@@ -28,7 +34,7 @@ config.flushIntervalSeconds = 0.5;
 config.flushWarnings = true;
 config.rateLimitEntryTtlSeconds = 600.0;
 config.maxRateLimitEntries = 2048;
-Log::initialize("logs/game.log", config);
+Log::initialize("logs/application.log", config);
 ```
 
 Defaults:
@@ -50,14 +56,14 @@ The levels are `Error`, `Warning`, `Info`, `Debug`, and `Trace`. Selecting a lev
 more severe levels.
 
 ```cpp
-Log::info("MapLoader", "Loaded mountain.tmx");
-Log::warning("MapLoader", "Missing spawn layer");
+Log::info("Startup", "Initialization completed");
+Log::warning("Configuration", "Optional value is missing");
 ```
 
 Output uses local time with milliseconds:
 
 ```text
-[20:51:14.382] [INFO] [MapLoader] Loaded mountain.tmx
+[20:51:14.382] [INFO] [Startup] Initialization completed
 ```
 
 Each `Log::*` call is atomic relative to other logger calls. Raw writes to `std::cout`, `std::cerr`,
@@ -71,8 +77,8 @@ always flushes the file.
 ## Rate limiting
 
 ```cpp
-if (!Log::isRateLimited("FishActivity:non_water", 5.0)) {
-    Log::debug("FishActivity", "Rejected activity outside water");
+if (!Log::isRateLimited("RepeatedEvent", 5.0)) {
+    Log::debug("RateLimit", "Repeated event detected");
 }
 ```
 
@@ -85,8 +91,8 @@ size limit as a safeguard.
 ```cpp
 Log::ScopedTimer timer(
     Log::Level::Debug,
-    "MapTransition",
-    "Build mountain vegetation",
+    "Performance",
+    "Process batch",
     5.0
 );
 ```
