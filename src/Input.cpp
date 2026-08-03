@@ -1,7 +1,8 @@
-#include <game_core/Input.h>
+#include <teya/core/Input.h>
 #include <array>
 #include <raylib.h>
 
+namespace teya::core {
 namespace
 {
 
@@ -55,3 +56,5 @@ namespace Input
     bool isReleased(Action action) { return anyBindingMatches(action, IsKeyReleased); }
 
 } // namespace Input
+
+} // namespace teya::core

@@ -1,11 +1,16 @@
-# cpp-game-core
+# teya-core
+
+The required foundation for Teya games. It owns raylib and nlohmann/json and
+exports them transitively through the `Teya::Core` CMake target.
 
 ## Logging
 
 The logger writes structured messages to the console and to one file chosen by the application:
 
 ```cpp
-#include <game_core/Log.h>
+#include <teya/core/Log.h>
+
+using namespace teya::core;
 
 int main() {
     if (!Log::deleteOldLogs("logs", 10)) return 1;
@@ -36,7 +41,7 @@ See [the logging guide](docs/logging.md) for levels, rate limiting, timers, and 
 
 ## Standalone logging test
 
-The complete `cpp_game_core` library receives raylib and nlohmann/json targets from its parent game. The logger itself is dependency-free and can be built and tested directly on Windows:
+The complete `teya_core` library builds its raylib and nlohmann/json submodules and can be tested directly on Windows:
 
 ```powershell
 cmake --preset windows-log-debug
@@ -44,4 +49,4 @@ cmake --build --preset windows-log-debug
 ctest --preset windows-log-debug
 ```
 
-In VS Code, open the `cpp-game-core` directory itself and select **Windows Log Test (Visual Studio)** as the configure preset. Opening the template directory configures the template instead.
+In VS Code, open the `teya-core` directory itself and select **Windows Log Test (Visual Studio)** as the configure preset.

@@ -1,10 +1,10 @@
-#include <game_core/JsonFile.h>
+#include <teya/core/JsonFile.h>
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
 #include <system_error>
 
-namespace json_file
+namespace teya::core::json_file
 {
 
     nlohmann::json load(const std::filesystem::path &path)
@@ -53,4 +53,4 @@ namespace json_file
         }
     }
 
-} // namespace json_file
+} // namespace teya::core::json_file

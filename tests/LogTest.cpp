@@ -1,4 +1,4 @@
-#include <game_core/Log.h>
+#include <teya/core/Log.h>
 
 #include <cassert>
 #include <chrono>
@@ -21,7 +21,7 @@ std::string readFile(const std::filesystem::path &path) {
 } // namespace
 
 int main() {
-    const auto directory = std::filesystem::temp_directory_path() / "cpp_game_core_log_test";
+    const auto directory = std::filesystem::temp_directory_path() / "teya_core_log_test";
     const auto path = directory / "test.log";
     const auto ignoredPath = directory / "ignored.log";
     std::error_code fileError;
@@ -29,55 +29,55 @@ int main() {
     std::filesystem::create_directories(directory);
     std::ofstream(path) << "previous run entry\n";
 
-    Log::LogConfig config;
-    config.level = Log::Level::Debug;
+    teya::core::Log::LogConfig config;
+    config.level = teya::core::Log::Level::Debug;
     config.flushIntervalSeconds = 0.05;
     config.rateLimitEntryTtlSeconds = 0.0;
     config.maxRateLimitEntries = 2;
-    assert(Log::initialize(path, config));
-    assert(!Log::initialize(ignoredPath, config));
-    Log::flush();
+    assert(teya::core::Log::initialize(path, config));
+    assert(!teya::core::Log::initialize(ignoredPath, config));
+    teya::core::Log::flush();
     assert(readFile(path).find("already initialized") != std::string::npos);
 
-    assert(Log::isEnabled(Log::Level::Debug));
-    assert(!Log::isEnabled(Log::Level::Trace));
-    assert(!Log::isRateLimited("RepeatedEvent", 60.0));
-    assert(Log::isRateLimited("RepeatedEvent", 60.0));
+    assert(teya::core::Log::isEnabled(teya::core::Log::Level::Debug));
+    assert(!teya::core::Log::isEnabled(teya::core::Log::Level::Trace));
+    assert(!teya::core::Log::isRateLimited("RepeatedEvent", 60.0));
+    assert(teya::core::Log::isRateLimited("RepeatedEvent", 60.0));
 
     std::ostringstream capturedConsole;
     auto *originalCout = std::cout.rdbuf(capturedConsole.rdbuf());
-    Log::info("InfoTest", "Informational message");
-    Log::debug("DebugTest", "Debug message");
-    Log::info("Tag\nContinuation", "First line\r\nSecond line");
-    Log::trace("LogTrace", "This trace entry must be suppressed");
+    teya::core::Log::info("InfoTest", "Informational message");
+    teya::core::Log::debug("DebugTest", "Debug message");
+    teya::core::Log::info("Tag\nContinuation", "First line\r\nSecond line");
+    teya::core::Log::trace("LogTrace", "This trace entry must be suppressed");
     std::cout << "raw cout entry\n";
 
     {
-        Log::ScopedTimer timer(Log::Level::Debug, "Timer", "Visible timer", 0.0);
+        teya::core::Log::ScopedTimer timer(teya::core::Log::Level::Debug, "Timer", "Visible timer", 0.0);
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
     }
     {
-        Log::ScopedTimer timer(Log::Level::Debug, "Timer", "Hidden timer", 1000.0);
+        teya::core::Log::ScopedTimer timer(teya::core::Log::Level::Debug, "Timer", "Hidden timer", 1000.0);
     }
 
     std::vector<std::thread> threads;
     for (int thread = 0; thread < 4; ++thread) {
         threads.emplace_back([thread] {
             for (int entry = 0; entry < 25; ++entry)
-                Log::info("Concurrent", "thread=" + std::to_string(thread) +
+                teya::core::Log::info("Concurrent", "thread=" + std::to_string(thread) +
                                              " entry=" + std::to_string(entry));
         });
     }
     for (auto &thread : threads) thread.join();
     std::cout.rdbuf(originalCout);
 
-    Log::warning("WarningTest", "Warning is visible and flushed");
-    Log::error("ErrorTest", "Error is visible and flushed");
+    teya::core::Log::warning("WarningTest", "Warning is visible and flushed");
+    teya::core::Log::error("ErrorTest", "Error is visible and flushed");
     for (int i = 0; i < 20; ++i)
-        assert(!Log::isRateLimited("dynamic:" + std::to_string(i), 1.0));
+        assert(!teya::core::Log::isRateLimited("dynamic:" + std::to_string(i), 1.0));
 
-    Log::shutdown();
-    Log::shutdown();
+    teya::core::Log::shutdown();
+    teya::core::Log::shutdown();
 
     const auto contents = readFile(path);
     const std::regex timestamp(
@@ -95,12 +95,12 @@ int main() {
     assert(capturedConsole.str().find("raw cout entry") != std::string::npos);
     assert(!std::filesystem::exists(ignoredPath));
 
-    Log::LogConfig errorOnly;
-    errorOnly.level = Log::Level::Error;
-    assert(Log::initialize(path, errorOnly));
-    assert(!Log::isEnabled(Log::Level::Warning));
-    assert(Log::isEnabled(Log::Level::Error));
-    Log::shutdown();
+    teya::core::Log::LogConfig errorOnly;
+    errorOnly.level = teya::core::Log::Level::Error;
+    assert(teya::core::Log::initialize(path, errorOnly));
+    assert(!teya::core::Log::isEnabled(teya::core::Log::Level::Warning));
+    assert(teya::core::Log::isEnabled(teya::core::Log::Level::Error));
+    teya::core::Log::shutdown();
 
     const auto combinedContents = readFile(path);
     const std::string divider = "===== Log session started:";
@@ -119,7 +119,7 @@ int main() {
     }
     const auto unrelatedPath = cleanupDirectory / "notes.txt";
     std::ofstream(unrelatedPath) << "unrelated";
-    assert(Log::deleteOldLogs(cleanupDirectory, 2));
+    assert(teya::core::Log::deleteOldLogs(cleanupDirectory, 2));
     assert(!std::filesystem::exists(cleanupDirectory / "session-0.log"));
     assert(!std::filesystem::exists(cleanupDirectory / "session-1.log"));
     assert(std::filesystem::exists(cleanupDirectory / "session-2.log"));
