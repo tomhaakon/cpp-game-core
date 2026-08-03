@@ -39,6 +39,7 @@ set_target_properties(
         CXX_EXTENSIONS OFF
 )
 
+# Input and JsonFile still require these dependencies. Logging itself is dependency-free.
 target_link_libraries(
     cpp_game_core
     PUBLIC
@@ -53,7 +54,11 @@ add_library(
 )
 
 if(CPP_GAME_CORE_BUILD_LOG_TEST)
+    enable_testing()
     find_package(Threads REQUIRED)
-    add_executable(cpp_game_core_log_test tests/LogTest.cpp)
-    target_link_libraries(cpp_game_core_log_test PRIVATE cpp_game_core Threads::Threads)
+    add_executable(cpp_game_core_log_test tests/LogTest.cpp src/Log.cpp)
+    target_include_directories(cpp_game_core_log_test PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    target_compile_features(cpp_game_core_log_test PRIVATE cxx_std_17)
+    target_link_libraries(cpp_game_core_log_test PRIVATE Threads::Threads)
+    add_test(NAME cpp_game_core_log_test COMMAND cpp_game_core_log_test)
 endif()

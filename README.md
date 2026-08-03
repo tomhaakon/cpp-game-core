@@ -1,43 +1,27 @@
 # cpp-game-core
 
-## File logging
+## Logging
 
-Full configuration and usage documentation is available in [`docs/logging.md`](docs/logging.md).
-
-Initialize the logger near the start of the game and shut it down before exiting:
+The logger writes structured messages to the console and to one file chosen by the application:
 
 ```cpp
 #include <game_core/Log.h>
-#include <iostream>
 
 int main() {
-    Log::configureDefaults();
-    Log::initializeFileLogging("logs", "My Game");
-
-    Log::info("Startup", "Game initialized");
-    std::cout << "This is also copied to the log file\n";
-
-    Log::shutdownFileLogging();
+    Log::initialize("game.log");
+    Log::info("Game", "Started");
+    Log::warning("Assets", "Missing texture");
+    Log::shutdown();
 }
 ```
 
-Each run creates `logs/<index>_<date>_<time>_pid-<process-id>.txt`. Output written to `std::cout`,
-`std::cerr`, and `std::clog` is mirrored to that file while logging is active.
+Configure it with a small C++ value when defaults are not suitable:
 
-Optional JSON configuration can be applied with `Log::configureFromJson(document)`:
-
-```json
-{
-  "logging": {
-    "level": "info",
-    "raylib_level": "warning",
-    "always_show_warnings": true,
-    "rate_limits": {
-      "Player.position": 1.0
-    }
-  }
-}
+```cpp
+Log::LogConfig config;
+config.level = Log::Level::Debug;
+config.flushIntervalSeconds = 0.5;
+Log::initialize("logs/game.log", config);
 ```
 
-Levels are `error`, `warning`, `info`, `debug`, and `trace`. A configured rate-limit
-key also applies to detailed keys such as `Player.position:player-1`.
+See [the logging guide](docs/logging.md) for levels, rate limiting, timers, and flushing behavior.
