@@ -4,6 +4,14 @@ The logger provides timestamped, thread-safe console and file messages. It has n
 integration and does not intercept standard streams. Parent projects can forward Raylib callbacks
 to the normal `Log::*` functions when needed.
 
+The examples below assume:
+
+```cpp
+#include <teya/core/Log.h>
+
+using namespace teya::core;
+```
+
 ## Initialization
 
 ```cpp

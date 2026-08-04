@@ -29,10 +29,10 @@ logger appends to that file and adds session markers, but never renames or rotat
 Configure it with a small C++ value when defaults are not suitable:
 
 ```cpp
-Log::LogConfig config;
-config.level = Log::Level::Debug;
+teya::core::Log::LogConfig config;
+config.level = teya::core::Log::Level::Debug;
 config.flushIntervalSeconds = 0.5;
-if (!Log::initialize("logs/application-2026-08-03_20-51-14.log", config)) {
+if (!teya::core::Log::initialize("logs/application-2026-08-03_20-51-14.log", config)) {
     // Handle an invalid path or an already initialized logger.
 }
 ```
