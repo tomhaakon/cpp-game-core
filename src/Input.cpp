@@ -46,6 +46,20 @@ namespace
         return false;
     }
 
+    MouseButton bindingFor(PointerButton button)
+    {
+        switch (button)
+        {
+        case PointerButton::Primary:
+            return MOUSE_BUTTON_LEFT;
+        case PointerButton::Secondary:
+            return MOUSE_BUTTON_RIGHT;
+        case PointerButton::Middle:
+            return MOUSE_BUTTON_MIDDLE;
+        }
+        return MOUSE_BUTTON_LEFT;
+    }
+
 } // namespace
 
 namespace Input
@@ -56,6 +70,27 @@ namespace Input
     bool isPressed(Action action) { return anyBindingMatches(action, IsKeyPressed); }
 
     bool isReleased(Action action) { return anyBindingMatches(action, IsKeyReleased); }
+
+    bool isDown(PointerButton button)
+    {
+        return IsMouseButtonDown(static_cast<int>(bindingFor(button)));
+    }
+
+    bool isPressed(PointerButton button)
+    {
+        return IsMouseButtonPressed(static_cast<int>(bindingFor(button)));
+    }
+
+    bool isReleased(PointerButton button)
+    {
+        return IsMouseButtonReleased(static_cast<int>(bindingFor(button)));
+    }
+
+    PointerPosition pointerPosition()
+    {
+        const Vector2 position = GetMousePosition();
+        return {position.x, position.y};
+    }
 
 } // namespace Input
 
