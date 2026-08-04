@@ -7,6 +7,20 @@ project(
 )
 
 option(TEYA_CORE_BUILD_TESTS "Build teya-core tests" ${PROJECT_IS_TOP_LEVEL})
+option(TEYA_ENABLE_PROFILING "Enable Tracy profiling across Teya targets" OFF)
+
+if(TEYA_ENABLE_PROFILING AND NOT TARGET Tracy::TracyClient)
+    include(FetchContent)
+    FetchContent_Declare(
+        tracy
+        GIT_REPOSITORY https://github.com/wolfpld/tracy.git
+        GIT_TAG v0.13.1
+        GIT_SHALLOW TRUE
+    )
+    set(TRACY_ENABLE ON CACHE BOOL "Enable Tracy client instrumentation" FORCE)
+    set(TRACY_ON_DEMAND ON CACHE BOOL "Record only while a Tracy server is connected" FORCE)
+    FetchContent_MakeAvailable(tracy)
+endif()
 
 set(BUILD_EXAMPLES OFF CACHE BOOL "Build raylib examples" FORCE)
 set(BUILD_GAMES OFF CACHE BOOL "Build raylib games" FORCE)
@@ -30,6 +44,7 @@ if(TARGET raylib AND TARGET nlohmann_json::nlohmann_json)
             include/teya/core/AssetPath.h
             include/teya/core/JsonFile.h
             include/teya/core/Log.h
+            include/teya/core/Profile.h
     )
 
     target_include_directories(
@@ -56,6 +71,13 @@ if(TARGET raylib AND TARGET nlohmann_json::nlohmann_json)
             raylib
             nlohmann_json::nlohmann_json
     )
+
+    if(TEYA_ENABLE_PROFILING)
+        target_link_libraries(teya_core PUBLIC Tracy::TracyClient)
+        target_compile_definitions(teya_core PUBLIC TEYA_PROFILING_ENABLED=1)
+    else()
+        target_compile_definitions(teya_core PUBLIC TEYA_PROFILING_ENABLED=0)
+    endif()
 
     add_library(
         Teya::Core

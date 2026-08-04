@@ -1,4 +1,5 @@
 #include <teya/core/JsonFile.h>
+#include <teya/core/Profile.h>
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
@@ -9,6 +10,7 @@ namespace teya::core::json_file
 
     nlohmann::json load(const std::filesystem::path &path)
     {
+        TEYA_PROFILE_ZONE_NAMED("JsonFile::load");
         std::ifstream input{path};
         if (!input)
         {
@@ -28,6 +30,7 @@ namespace teya::core::json_file
 
     void save(const std::filesystem::path &path, const nlohmann::json &document)
     {
+        TEYA_PROFILE_ZONE_NAMED("JsonFile::save");
         const std::filesystem::path parent = path.parent_path();
         if (!parent.empty())
         {

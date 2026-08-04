@@ -1,4 +1,5 @@
 #include <teya/core/Log.h>
+#include <teya/core/Profile.h>
 
 #include <algorithm>
 #include <chrono>
@@ -135,6 +136,7 @@ LogConfig sanitized(LogConfig config) {
 } // namespace
 
 bool initialize(const std::filesystem::path &filePath, const LogConfig &config) {
+    TEYA_PROFILE_ZONE_NAMED("Log::initialize");
     std::string failure;
     bool alreadyInitialized = false;
     {
@@ -175,6 +177,7 @@ bool initialize(const std::filesystem::path &filePath, const LogConfig &config) 
 }
 
 bool deleteOldLogs(const std::filesystem::path &directory, std::size_t maxFiles) {
+    TEYA_PROFILE_ZONE_NAMED("Log::deleteOldLogs");
     struct LogFile {
         std::filesystem::path path;
         std::filesystem::file_time_type modified;
@@ -259,6 +262,7 @@ bool isRateLimited(const std::string &key, double seconds) {
 }
 
 void message(Level level, const std::string &tag, const std::string &text) {
+    TEYA_PROFILE_ZONE_NAMED("Log::message");
     std::lock_guard<std::mutex> lock(logMutex);
     if (!levelEnabled(level)) return;
 

@@ -1,4 +1,5 @@
 #include <teya/core/Input.h>
+#include <teya/core/Profile.h>
 #include <array>
 #include <raylib.h>
 
@@ -62,6 +63,7 @@ namespace
 
     bool anyBindingMatches(Action action, KeyQuery keyQuery, GamepadQuery gamepadQuery)
     {
+        TEYA_PROFILE_ZONE_NAMED("Input::queryAction");
         for (const KeyboardKey key : bindingsFor(action))
         {
             if (key != KEY_NULL && keyQuery(static_cast<int>(key)))
