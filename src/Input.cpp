@@ -22,6 +22,8 @@ namespace
             return {KEY_S, KEY_DOWN};
         case Action::Run:
             return {KEY_LEFT_SHIFT, KEY_RIGHT_SHIFT};
+        case Action::Attack:
+            return {KEY_E, KEY_NULL};
         case Action::Confirm:
             return {KEY_ENTER, KEY_SPACE};
         case Action::Cancel:
@@ -47,6 +49,8 @@ namespace
             return GAMEPAD_BUTTON_LEFT_FACE_DOWN;
         case Action::Run:
             return GAMEPAD_BUTTON_LEFT_TRIGGER_1;
+        case Action::Attack:
+            return GAMEPAD_BUTTON_RIGHT_FACE_DOWN;
         case Action::Confirm:
             return GAMEPAD_BUTTON_RIGHT_FACE_DOWN;
         case Action::Cancel:

@@ -8,6 +8,7 @@ enum class Action {
     MoveUp,
     MoveDown,
     Run,
+    Attack,
     Confirm,
     Cancel,
     Pause
